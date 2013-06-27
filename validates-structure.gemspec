@@ -9,9 +9,9 @@ Gem::Specification.new do |s|
   s.version     = ValidatesStructure::VERSION
   s.authors     = ["Daniel Ström"]
   s.email       = ["D@nielstrom.se"]
-  s.homepage    = "pugglepay.com"
-  s.summary     = "TODO: Summary of ValidatesStructure."
-  s.description = "TODO: Description of ValidatesStructure."
+  s.homepage    = "http://pugglepay.com"
+  s.summary     = "Summary of ValidatesStructure."
+  s.description = "Description of ValidatesStructure."
 
   s.files = Dir["{app,config,db,lib}/**/*"] + ["MIT-LICENSE", "Rakefile", "README.rdoc"]
   s.test_files = Dir["test/**/*"]
@@ -19,4 +19,5 @@ Gem::Specification.new do |s|
   s.add_dependency "rails", "~> 3.2.13"
 
   s.add_development_dependency "sqlite3"
+  s.add_development_dependency "rspec"
 end
