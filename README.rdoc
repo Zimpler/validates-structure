@@ -1,3 +1,72 @@
 = ValidatesStructure
 
 This project rocks and uses MIT-LICENSE.
+
+What we are going for:
+
+====================================================
+
+class PaymentStruct do
+  include StrucureValidator
+
+  attr :raw_payment
+
+  class EmailValidator < ActiveModel::EachValidator
+    def validate_each(record, attribute, value)
+      record.errors.add attribute, (options[:message] || "is not an email") unless
+        value =~ /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/i
+    end
+  end
+
+  validates_presence_of :raw_payment
+  validates_structure_of :raw_payment do
+    key "payment", Hash, presence: true, if: "ok?" do
+      key "ref", String
+      key "conditions_id", String, presence: true
+      key "currency", String, presence: true
+      key "items", Array, presence: true, length: { minimum: 1 } do
+        value Hash, presence: true do
+          key "title", String, presence: true, length: { maximum: 100 }
+          key "quantity", Integer  # Implies :numericality => true
+          key "vat_percentage", String, presence: true, format: { with: /\A\d+\.\d{2}\Z/ }
+          key "gross_unit_price", String, presence: true, format: { with: /\A-?\d+\.\d{2}\Z/ }
+        end
+      end
+      key "items", Array[Hash], presence: true, length: { minimum: 1 }, each: { presence: true } do
+        key "title", String, presence: true, length: { maximum: 100 }
+        key "quantity", Integer  # Implies :numericality => true
+        key "vat_percentage", String, presence: true, format: { with: /\A\d+\.\d{2}\Z/ }
+        key "gross_unit_price", String, presence: true, format: { with: /\A-?\d+\.\d{2}\Z/ }
+      end
+
+      key "item_ids", Array, presence: true, length: { minimum: 1 } do
+        value Integer, presence: true
+      end
+      key "item_ids", Array[Integer], presence: true, length: { minimum: 1 }, each: { presence: true }
+
+      key "end_user", Hash, presence: true do
+        key "ref_type", String, presence: true
+        key "pno", String, presence: true, format: { with: /^\d{8}-\d{4}$/ }
+        key "first_name", String
+        key "last_name", String
+        key "date_of_birth", String
+        key "email", String, email: true
+        key "phone", String
+        key "ip", String
+        key "device_id", String
+        key "address", Hash do
+          key "address_line_1", String, presence: true
+          key "address_line_2", String
+          key "postcode", String, presence: true
+          key "city", String, presence: true
+          key "country", String, presence: true
+        end
+      end
+    end
+  end
+end
+
+p = PaymentStruct.new
+p.raw_payment = params.slice(:payment)
+p.valid?
+p.errors # {:raw_payment => ["payment/items/title can't be blank", "unknown attribute payment/items/tittle"]}
