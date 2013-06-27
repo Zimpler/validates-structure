@@ -7,9 +7,9 @@ require "validates-structure/version"
 Gem::Specification.new do |s|
   s.name        = "validates-structure"
   s.version     = ValidatesStructure::VERSION
-  s.authors     = ["TODO: Your name"]
-  s.email       = ["TODO: Your email"]
-  s.homepage    = "TODO"
+  s.authors     = ["Daniel Ström"]
+  s.email       = ["D@nielstrom.se"]
+  s.homepage    = "pugglepay.com"
   s.summary     = "TODO: Summary of ValidatesStructure."
   s.description = "TODO: Description of ValidatesStructure."
 
