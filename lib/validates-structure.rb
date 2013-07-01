@@ -78,17 +78,26 @@ module ValidatesStructure
     class TypeValidator < ActiveModel::EachValidator
       def validate_each(record, attribute, value)
         type = options[:with]
-        unless value.is_a? type
+        if type < ValidatesStructure::StructuredHash
+          structured_hash = type.new(value)
+          if !structured_hash.valid?
+            error_desc = []
+            structured_hash.errors.each do |a, m|
+              error_desc << "#{a} #{m}"
+            end
+            record.errors.add attribute, error_desc.join('\n')
+          end
+        elsif !(value.class <= type)
           record.errors.add attribute, "has type \"#{value.class}\" but should be a \"#{type}\"."
         end
       end
     end
 
-    class StructureValidator < ActiveModel::Validator
-      def validate(record)
-        #TODO: validate the hash structure
-      end
-    end
+  end
 
+  class StructureValidator < ActiveModel::Validator
+    def validate(record)
+        #TODO: validate the hash structure
+    end
   end
 end

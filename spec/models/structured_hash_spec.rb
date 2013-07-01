@@ -81,3 +81,36 @@ describe 'A nested instance of StructuredHash' do
     end
   end
 end
+
+
+describe 'A compound instance of StructuredHash' do
+  class MyInnerHash < ValidatesStructure::StructuredHash
+      key 'bepa', Integer, presence: true, numericality: true
+  end
+
+  class MyOuterHash < ValidatesStructure::StructuredHash
+    key 'apa', MyInnerHash, presence: true
+  end
+
+  describe 'given a valid hash' do
+    before :each do
+      @hash = { apa: { bepa: 3 } }
+      @mine = MyOuterHash.new @hash
+    end
+
+    it 'should be valid' do
+      @mine.should be_valid
+    end
+  end
+
+  describe 'given an invalid hash' do
+    before :each do
+      @hash = { apa: { bepa: 'invalid' } }
+      @mine = MyOuterHash.new @hash
+    end
+
+    it 'should not be valid' do
+      @mine.should_not be_valid
+    end
+  end
+end
