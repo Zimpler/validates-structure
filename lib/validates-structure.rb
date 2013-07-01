@@ -27,11 +27,11 @@ require 'json'
 module ValidatesStructure
   class StructuredHash
     include ActiveModel::Validations
-    #include ActiveSupport::Callbacks # Might be useful for initial data molding - future feature?
 
     attr_reader :raw
 
-    @@structure = {}
+    class_attribute :structure, instance_writer: false
+    class_attribute :context, instance_writer: false
 
     def initialize(hash_or_json)
       @raw = hash_or_json
@@ -43,47 +43,35 @@ module ValidatesStructure
     end
 
     def self.key(key, type, validations, &block)
-      context ||= ""
-      set_key(context + "[#{key}]", TypedValidation.new(type, validations))
+      unless self.structure
+        self.structure = {} # Don't modify superclass variable
+      end
+
+      unless self.context
+        self.context = ''
+      end
+
+      self.context += "[#{key}]"
+      validates self.context, validations
+      #TODO: Add type validator
 
       if block_given?
-        context << "[#{key}]"
         yield
-        context.chomp!("[#{key}]")
       end
+
+      self.context = self.context.chomp("[#{key}]")
     end
 
     def self.value(key, type, validations)
+      'unimplemented'
     end
 
-    def read_attributes_for_validation(key)
-      @hash[key]
-    end
+    def read_attribute_for_validation(key)
+      key.scan(/\w+/i).reduce(@hash) { |dict, k| dict[k] }
+    end    
 
     def [](key)
       @hash[key]
     end
-
-    private
-
-    def self.set_key(key, struct)
-      keys = key.scan(/\w+/i)
-
-      s = @@structure
-      (0..keys.length-2).each do |i|
-        s = s[keys[i]]
-      end
-      s[keys[keys.length-1]] = struct
-    end
-
-    class TypedValidation
-      attr_accessor :type, :validations
-
-      def initialize(type, validations)
-        @type = type
-        @validations = validations
-      end
-    end
-
   end
 end

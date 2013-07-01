@@ -1,7 +1,7 @@
 require 'spec_helper'
 
-describe 'An simple instance of StructuredHash' do
-  class MyHash < ValidatesStructure::StructuredHash
+describe 'A simple instance of StructuredHash' do
+  class MySimpleHash < ValidatesStructure::StructuredHash
     key 'apa', Integer, presence: true
   end
 
@@ -9,7 +9,7 @@ describe 'An simple instance of StructuredHash' do
   describe 'given a hash' do
     before :each do
       @hash = { apa: 1 }
-      @mine = MyHash.new @hash
+      @mine = MySimpleHash.new @hash
     end
     
     it 'should respond to ActiveModel validation methods' do
@@ -33,7 +33,7 @@ describe 'An simple instance of StructuredHash' do
   describe 'given a json string' do
     before :each do
       @json = '{"apa": 1}'
-      @mine = MyHash.new @json
+      @mine = MySimpleHash.new @json
     end
 
     it 'should have the original json accessible' do
@@ -45,4 +45,27 @@ describe 'An simple instance of StructuredHash' do
     end
   end
 
+end
+
+describe 'A nested instance of StructuredHash' do
+  class MyStructuredHash < ValidatesStructure::StructuredHash
+    key 'bepa', Hash, presence: true do
+      key 'cepa', Integer, presence: true, format: { with: /3/i}
+    end
+  end
+
+  describe 'given a valid hash' do
+    before :each do
+      @hash = { bepa: { cepa: 3 } }
+      @mine = MyStructuredHash.new @hash
+    end
+
+    it 'should respond with "3" to "[:apa][:bepa]"' do
+      @mine[:bepa][:cepa].should eq 3
+    end
+
+    it 'should be valid' do
+      @mine.should be_valid
+    end
+  end
 end
