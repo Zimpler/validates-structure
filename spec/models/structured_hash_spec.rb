@@ -68,4 +68,16 @@ describe 'A nested instance of StructuredHash' do
       @mine.should be_valid
     end
   end
+
+
+  describe 'given an invalid hash' do
+    before :each do
+      @hash = { bepa: { cepa: 'invalid' } }
+      @mine = MyStructuredHash.new @hash
+    end
+
+    it 'should not be valid' do
+      @mine.should_not be_valid
+    end
+  end
 end
