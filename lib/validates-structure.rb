@@ -1,4 +1,5 @@
 require 'active_model'
+require 'active_model'
 require 'active_support/core_ext'
 require 'json'
 
@@ -30,7 +31,6 @@ module ValidatesStructure
 
     attr_reader :raw
 
-    class_attribute :structure, instance_writer: false
     class_attribute :context, instance_writer: false
 
     def initialize(hash_or_json)
@@ -43,28 +43,39 @@ module ValidatesStructure
     end
 
     def self.key(key, type, validations, &block)
-      unless self.structure
-        self.structure = {} # Don't modify superclass variable
-      end
-
       unless self.context
-        self.context = ''
+        self.context = '//'
       end
 
-      self.context += "[#{key}]"
+      if self.context == '//'
+        self.context += "#{key}" 
+      else
+        self.context += "/#{key}"
+      end
+
       validations.merge!(type: type)
       validates self.context, validations
-      #TODO: Add type validator
 
       if block_given?
         yield
       end
 
-      self.context = self.context.chomp("[#{key}]")
+      if self.context == "//#{key}"
+        self.context = self.context.chomp("#{key}")
+      else
+        self.context = self.context.chomp("/#{key}")
+      end
     end
 
-    def self.value(key, type, validations)
-      'unimplemented'
+    def self.value(type, validations, &block)
+      validations.merge!(type: type)
+      validates self.context, enumerable: validations
+
+      self.context += '[*]'
+      if block_given?
+        yield
+      end
+      self.context = self.context.chomp('[*]')
     end
 
     def read_attribute_for_validation(key)
@@ -89,6 +100,33 @@ module ValidatesStructure
           end
         elsif !(value.class <= type)
           record.errors.add attribute, "has type \"#{value.class}\" but should be a \"#{type}\"."
+        end
+      end
+    end
+
+    class EnumerableValidator < ActiveModel::EachValidator
+      # Validates each value in an enumerable type using ActiveModel validations.
+      # Adapted from a snippet by Milovan Zogovic (http://stackoverflow.com/a/12744945)
+      def validate_each(record, attribute, values)
+        [values].flatten.each_with_index do |value, index|
+          options.each do |key, args|
+            validator_options = { attributes: attribute }
+            validator_options.merge!(args) if args.is_a?(Hash)
+            validator_options.merge!(with: args) if key == :type
+
+            next if value.nil? && validator_options[:allow_nil]
+            next if value.blank? && validator_options[:allow_blank]
+
+            validator_class_name = "ValidatesStructure::StructuredHash::#{key.to_s.camelize}Validator"
+            validator_class = begin
+              validator_class_name.constantize
+            rescue NameError
+              "ActiveModel::Validations::#{validator_class_name}".constantize
+            end
+
+            validator = validator_class.new(validator_options)
+            validator.validate_each(record, attribute + "[#{index}]", value)
+          end
         end
       end
     end

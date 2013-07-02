@@ -114,3 +114,35 @@ describe 'A compound instance of StructuredHash' do
     end
   end
 end
+
+describe 'A StructuredHash containing an array' do
+  class MyArrayHash < ValidatesStructure::StructuredHash
+    key 'apa', Hash, presence: true do
+      key 'bepa', Array, presence: true do
+        value Integer, presence: true
+      end
+    end
+  end
+
+  describe 'given a valid hash' do
+    before :each do
+      @hash = { apa: { bepa: [ 3, 5, 10 ] } }
+      @mine = MyArrayHash.new @hash
+    end
+
+    it 'should be valid' do
+      @mine.should be_valid
+    end
+  end
+
+  describe 'given an invalid hash' do
+    before :each do
+      @hash = { apa: { bepa: [ 3, 'invalid', 10 ] } }
+      @mine = MyArrayHash.new @hash
+    end
+
+    it 'should not be valid' do
+      @mine.should_not be_valid
+    end
+  end
+end
