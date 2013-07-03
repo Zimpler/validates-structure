@@ -60,7 +60,7 @@ describe 'A nested instance of StructuredHash' do
       @mine = MyStructuredHash.new @hash
     end
 
-    it 'should respond with "3" to "[:apa][:bepa]"' do
+    it 'should respond with "3" to "[:bepa][:cepa]"' do
       @mine[:bepa][:cepa].should eq 3
     end
 
@@ -139,6 +139,38 @@ describe 'A StructuredHash containing an array' do
     before :each do
       @hash = { apa: { bepa: [ 3, 'invalid', 10 ] } }
       @mine = MyArrayHash.new @hash
+    end
+
+    it 'should not be valid' do
+      @mine.should_not be_valid
+    end
+  end
+end
+
+describe 'A StructuredHash with a custom validation' do
+  class MyCustomHash < ValidatesStructure::StructuredHash
+    key 'apa', Integer, presence: true, with: :validate_odd
+
+    def validate_odd(attribute)
+      errors.add attribute, "can't be even." if self[attribute].even?
+    end
+  end
+
+  describe 'given a valid hash' do
+    before :each do
+      @hash = { apa: 3 }
+      @mine = MyCustomHash.new @hash
+    end
+
+    it 'should be valid' do
+      @mine.should be_valid
+    end
+  end
+
+  describe 'given an invalid hash' do
+    before :each do
+      @hash = { apa: 2 }
+      @mine = MyCustomHash.new @hash
     end
 
     it 'should not be valid' do

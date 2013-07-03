@@ -53,7 +53,7 @@ module ValidatesStructure
         self.context += "/#{key}"
       end
 
-      validations.merge!(type: type)
+      validations.merge!(type: { type: type })
       validates self.context, validations
 
       if block_given?
@@ -68,7 +68,7 @@ module ValidatesStructure
     end
 
     def self.value(type, validations, &block)
-      validations.merge!(type: type)
+      validations.merge!(type: { type: type })
       validates self.context, enumerable: validations
 
       self.context += '[*]'
@@ -83,12 +83,12 @@ module ValidatesStructure
     end    
 
     def [](key)
-      @hash[key]
+      read_attribute_for_validation key.to_s
     end
 
     class TypeValidator < ActiveModel::EachValidator
       def validate_each(record, attribute, value)
-        type = options[:with]
+        type = options[:type]
         if type < ValidatesStructure::StructuredHash
           structured_hash = type.new(value)
           if !structured_hash.valid?
@@ -112,7 +112,6 @@ module ValidatesStructure
           options.each do |key, args|
             validator_options = { attributes: attribute }
             validator_options.merge!(args) if args.is_a?(Hash)
-            validator_options.merge!(with: args) if key == :type
 
             next if value.nil? && validator_options[:allow_nil]
             next if value.blank? && validator_options[:allow_blank]
