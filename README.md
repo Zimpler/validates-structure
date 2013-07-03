@@ -48,16 +48,97 @@ Quick facts about Validates Structure
 * A String given to the ValidatesStructure::StructuredHash::new method will be automatically evaluated as json.
 * You can make compound hashes by setting a sublass to ValidatesStructure::StructuredHash as the type in a key or value declaration.
 * You can use a subset of XPath to access attributes in such a way that `my_hash[:apa][:bepa][3]` and `my_hash['//apa/bepa[3]']` are equivalent.
-* It doesn't matter if you access values using strings or symbols ```my_hash[:apa] ``` and ```my_hash['apa'] ``` are equivalent.
+* It doesn't matter if you access values using strings or symbols; ```my_hash[:apa] ``` and ```my_hash['apa'] ``` are equivalent.
 * Just like when validating fields in a model, you can use your own custom validations.
+
+
+Examples
+--------
+
+The most common way to use Validates Structure is to make a subclass of ValidatesStructure::StructuredHash and define the sought structure of the hash using the _key_ method like so:
+
+```ruby
+class MySimpleHash < ValidatesStructure::StructuredHash
+  key 'apa', Integer, presence: true
+end
+```
+
+The above code corresponds to a hash in the following format:
+
+```ruby
+{
+  apa: 3 # any integer
+}
+```
+
+Notice that the containing hash is implicitly defined through the class definition.
 
 
 Documentation
 -------------
 
+### ValidatesStructure::StructuredHash
 
-Examples
---------
+#### self.key(index, type, validations={}, &block)
+Sets up a requirement on the form ```'index' => type``` that are validated with _validations_ and containing children on the form specified in _&block_.
+
+**Parameters**
+
+_index_ - The string or symbol by which to retrieve the value
+
+_type_ - The required class of the value. If type is a subclass of ValidatesStructure::StructuredHash then the value is validated as specified in its definition.
+
+_validations_ - A hash with [ActiveModel:Validations](http://api.rubyonrails.org/classes/ActiveModel/Validations/HelperMethods.html) on the same format as for the [validates](http://apidock.com/rails/ActiveModel/Validations/ClassMethods/validates) method.
+
+_&block_ - A block of nested _key_ and/or _value_ declarations. Only applicable if the type can be accessed using []= eg. Arrays and Hashes.
+
+
+**Returns**
+
+A String. The current context as the XPath location of the parent or the root '//'.
+
+
+#### self.value(type, validations={}, &block)
+Sets up a requirement like self.key but without an index. Useful for structures that are accessed by a numeric index such as Arrays.
+
+**Parameters**
+
+_type_ - The required class of the value. If type is a subclass of ValidatesStructure::StructuredHash then the value is validated as specified in its definition.
+
+_validations_ - A hash with [ActiveModel:Validations](http://api.rubyonrails.org/classes/ActiveModel/Validations/HelperMethods.html) on the same format as for the [validates](http://apidock.com/rails/ActiveModel/Validations/ClassMethods/validates) method.
+
+_&block_ - A block of nested _key_ and/or _value_ declarations. Only applicable if the type can be accessed using []= eg. Arrays and Hashes.
+
+
+**Returns**
+
+A String. The current context as the XPath location of the parent or the root '//'.
+
+
+**Gotcha**
+
+Using several value declarations will merge the validations into a single validation. The following code would require each element of the Array 'apa' to be both an Integer and a String (and verify presence twice).
+
+```ruby
+class MySimpleHash < ValidatesStructure::StructuredHash
+  key 'apa', Array do
+  	value Integer, presence: true
+  	value String, presence: true
+  end
+end
+```
+
+
+#### []=(key)
+Allows you to access your hash using either normal indexes (```my_hash[:apa][:bepa][3]```) or XPath strings (```my_hash['//apa/bepa[3]']```). You are free to use strings, symbols or integers for indexes (```my_hash['apa']['bepa'][:3]```).
+
+**Paramenters**
+
+_key_ - The index or XPath to lookup.
+
+**Returns**
+
+The value of the supplied key.
 
 
 Some History

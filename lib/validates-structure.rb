@@ -42,7 +42,7 @@ module ValidatesStructure
       end
     end
 
-    def self.key(key, type, validations, &block)
+    def self.key(key, type, validations={}, &block)
       unless self.context
         self.context = '//'
       end
@@ -67,7 +67,7 @@ module ValidatesStructure
       end
     end
 
-    def self.value(type, validations, &block)
+    def self.value(type, validations={}, &block)
       validations.merge!(type: { type: type })
       validates self.context, enumerable: validations
 
@@ -79,7 +79,7 @@ module ValidatesStructure
     end
 
     def read_attribute_for_validation(key)
-      key.scan(/\w+/i).reduce(@hash) { |dict, k| dict[k] }
+      key.to_s.scan(/\w+/i).reduce(@hash) { |dict, k| dict[k] }
     end    
 
     def [](key)
