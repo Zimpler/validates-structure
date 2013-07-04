@@ -55,27 +55,74 @@ Quick facts about Validates Structure
 Examples
 --------
 
-The most common way to use Validates Structure is to make a subclass of ValidatesStructure::StructuredHash and define the sought structure of the hash using the _key_ method like so:
+### Minimal example
 
 ```ruby
+# Example valid hash:
+# { apa: 3 }
 class MySimpleHash < ValidatesStructure::StructuredHash
   key 'apa', Integer, presence: true
 end
 ```
 
-The above code corresponds to a hash in the following format:
+### Nested example
 
 ```ruby
-{
-  apa: 3 # any integer
-}
+# Example valid hash:
+# { apa: { bepa: 3 } }
+class MyStructuredHash < ValidatesStructure::StructuredHash
+  key 'apa', Hash, presence: true do
+    key 'bepa', Integer, presence: true, format: { with: /3/i}
+  end
+end
 ```
 
-Notice that the containing hash is implicitly defined through the class definition.
+### Array example
+
+```ruby
+# Example valid hash:
+# { apa: { bepa: [1, 2, 3] } }
+class MyArrayHash < ValidatesStructure::StructuredHash
+  key 'apa', Hash, presence: true do
+    key 'bepa', Array, presence: true do
+      value Integer, presence: true
+    end
+  end
+end
+```
+
+### Compound example
+
+```ruby
+# Example valid hash:
+# { apa: { bepa: 3 } }
+class MyInnerHash < ValidatesStructure::StructuredHash
+    key 'bepa', Integer, presence: true, numericality: true
+end
+
+class MyOuterHash < ValidatesStructure::StructuredHash
+  key 'apa', MyInnerHash, presence: true
+end
+```
+
+### Custom validation example
+
+```ruby
+# Example valid hash:
+# { apa: 3 }
+class MyCustomHash < ValidatesStructure::StructuredHash
+  key 'apa', Integer, presence: true, with: :validate_odd
+
+  def validate_odd(attribute)
+    errors.add attribute, "can't be even." if self[attribute].even?
+  end
+end
+```
 
 
 Documentation
 -------------
+This documentation is about the modules, classes, methods and options of ValidatesStructure. For dokumentation on ActiveModel::Validations see [the ActiveModel documentation.](http://apidock.com/rails/ActiveModel/Validations/ClassMethods/validates)
 
 ### ValidatesStructure::StructuredHash
 
