@@ -45,6 +45,8 @@ my_hash.errors.each { |attr, error| puts "#{attr}: #{error}"}
 
 Quick facts about Validates Structure
 -------------------------------------
+* Validates Structure uses ActiveModel::Validations to validate your hash.
+* Validates Structure automatically validates the type of each declared entry and will give an error when undeclared keys are present.
 * A String given to the ValidatesStructure::StructuredHash::new method will be automatically evaluated as json.
 * You can make compound hashes by setting a sublass to ValidatesStructure::StructuredHash as the type in a key or value declaration.
 * You can use a subset of XPath to access attributes in such a way that `my_hash[:apa][:bepa][3]` and `my_hash['//apa/bepa[3]']` are equivalent.
@@ -58,30 +60,30 @@ Examples
 ### Minimal example
 
 ```ruby
-# Example valid hash:
-# { apa: 3 }
 class MySimpleHash < ValidatesStructure::StructuredHash
   key 'apa', Integer, presence: true
 end
+
+MySimpleHash.new(apa: 3).valid?
+# => true
 ```
 
 ### Nested example
 
 ```ruby
-# Example valid hash:
-# { apa: { bepa: 3 } }
 class MyStructuredHash < ValidatesStructure::StructuredHash
   key 'apa', Hash, presence: true do
     key 'bepa', Integer, presence: true, format: { with: /3/i}
   end
 end
+
+MyStructuredHash.new(apa: { bepa: 3 }).valid?
+# => true
 ```
 
 ### Array example
 
 ```ruby
-# Example valid hash:
-# { apa: { bepa: [1, 2, 3] } }
 class MyArrayHash < ValidatesStructure::StructuredHash
   key 'apa', Hash, presence: true do
     key 'bepa', Array, presence: true do
@@ -89,13 +91,14 @@ class MyArrayHash < ValidatesStructure::StructuredHash
     end
   end
 end
+
+MyArrayHash.new(apa: { bepa: [1, 2, 3] }).valid?
+# => true
 ```
 
 ### Compound example
 
 ```ruby
-# Example valid hash:
-# { apa: { bepa: 3 } }
 class MyInnerHash < ValidatesStructure::StructuredHash
     key 'bepa', Integer, presence: true, numericality: true
 end
@@ -103,13 +106,14 @@ end
 class MyOuterHash < ValidatesStructure::StructuredHash
   key 'apa', MyInnerHash, presence: true
 end
+
+MyInnerHash.new(apa: { bepa: 3 }).valid?
+# => true
 ```
 
 ### Custom validation example
 
 ```ruby
-# Example valid hash:
-# { apa: 3 }
 class MyCustomHash < ValidatesStructure::StructuredHash
   key 'apa', Integer, presence: true, with: :validate_odd
 
@@ -117,12 +121,15 @@ class MyCustomHash < ValidatesStructure::StructuredHash
     errors.add attribute, "can't be even." if self[attribute].even?
   end
 end
+
+MyCustomHash.new(apa: 3).valid?
+# => true
 ```
 
 
 Documentation
 -------------
-This documentation is about the modules, classes, methods and options of ValidatesStructure. For dokumentation on ActiveModel::Validations see [the ActiveModel documentation.](http://apidock.com/rails/ActiveModel/Validations/ClassMethods/validates)
+This documentation is about the modules, classes, methods and options of ValidatesStructure. For documentation on ActiveModel::Validations see [the ActiveModel documentation.](http://apidock.com/rails/ActiveModel/Validations/ClassMethods/validates)
 
 ### ValidatesStructure::StructuredHash
 

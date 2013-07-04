@@ -5,7 +5,6 @@ describe 'A simple instance of StructuredHash' do
     key 'apa', Integer, presence: true
   end
 
-
   describe 'given a hash' do
     before :each do
       @hash = { apa: 1 }
@@ -42,6 +41,28 @@ describe 'A simple instance of StructuredHash' do
 
     it 'should have the hash items accessible through array lookup syntax' do
       @mine[:apa].should eq 1
+    end
+  end
+
+  describe 'given a hash with superfluous keys' do
+    it 'should not be valid (simple)' do
+      MySimpleHash.new(apa: 1, bepa: 2 ).should_not be_valid
+    end
+
+    it 'should not be valid (nested hash)' do
+      MySimpleHash.new(apa: { bepa: 2 } ).should_not be_valid
+    end
+
+    it 'should not be valid (nested array)' do
+      MySimpleHash.new(apa: [2, 3, 4] ).should_not be_valid
+    end
+
+    it 'should not be valid (double nested array)' do
+      MySimpleHash.new(apa: [[1,2,3], [1,2,3], [1,2,3]] ).should_not be_valid
+    end
+
+    it 'should not be valid (array of hashes)' do
+      MySimpleHash.new(apa: [{apa: 1}, {bepa: 1}, {cepa: 1}] ).should_not be_valid
     end
   end
 
@@ -146,6 +167,12 @@ describe 'A compound instance of StructuredHash' do
       @mine.should_not be_valid
     end
   end
+
+  describe 'given a hash with superfluous keys' do
+    it 'should not be valid' do
+      MySimpleHash.new(apa: {bepa: 2}, cepa: 2 ).should_not be_valid
+    end
+  end
 end
 
 describe 'A StructuredHash with a custom validation' do
@@ -176,6 +203,22 @@ describe 'A StructuredHash with a custom validation' do
 
     it 'should not be valid' do
       @mine.should_not be_valid
+    end
+  end
+end
+
+describe 'A StructuredHash with an optional key' do
+  class MyOptionalHash < ValidatesStructure::StructuredHash
+    key 'apa', Integer
+  end
+
+  describe 'given a hash without the key' do
+    before :each do
+      @mine = MyOptionalHash.new({})
+    end
+    
+    it 'should be valid' do
+      @mine.should be_valid
     end
   end
 end
