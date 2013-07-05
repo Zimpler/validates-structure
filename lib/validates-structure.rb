@@ -98,11 +98,7 @@ module ValidatesStructure
         # Leave validation to the StructuredHash
         structured_hash = keys[cont].new(struct)
         if !structured_hash.valid?
-          error_desc = []
-          structured_hash.errors.each do |a, m|
-            error_desc << "#{a} #{m}"
-          end
-          @init_errors[cont] = error_desc.join('\n')
+          @init_errors[cont] = structured_hash.errors.full_messages.join('\n')
         end
       elsif struct.is_a? Hash
         struct.each do |key, value|

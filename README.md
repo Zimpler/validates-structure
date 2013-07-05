@@ -38,7 +38,7 @@ end
 my_hash = MyStructuredHash.new({apa: {bepa: [2, 3, 'invalid']}})
 my_hash.valid?
 # => false
-my_hash.errors.each { |attr, error| puts "#{attr}: #{error}"}
+my_hash.errors.full_messages.join('\n')
 # => //apa/bepa[2]: has class "String" but should be a "Integer".
 
 ```
