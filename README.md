@@ -100,7 +100,7 @@ MyArrayHash.new(apa: { bepa: [1, 2, 3] }).valid?
 
 ```ruby
 class MyInnerHash < ValidatesStructure::StructuredHash
-    key 'bepa', Integer, presence: true, numericality: true
+    key 'bepa', Integer, presence: true
 end
 
 class MyOuterHash < ValidatesStructure::StructuredHash
