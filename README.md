@@ -39,16 +39,16 @@ my_hash = MyStructuredHash.new({apa: {bepa: [2, 3, 'invalid']}})
 my_hash.valid?
 # => false
 my_hash.errors.each { |attr, error| puts "#{attr}: #{error}"}
-# => //apa/bepa[2]: has type "String" but should be a "Integer".
+# => //apa/bepa[2]: has class "String" but should be a "Integer".
 
 ```
 
 Quick facts about Validates Structure
 -------------------------------------
 * Validates Structure uses ActiveModel::Validations to validate your hash.
-* Validates Structure automatically validates the type of each declared entry and will give an error when undeclared keys are present.
+* Validates Structure automatically validates the class of each declared entry and will give an error when undeclared keys are present.
 * A String given to the ValidatesStructure::StructuredHash::new method will be automatically evaluated as json.
-* You can make compound hashes by setting a sublass to ValidatesStructure::StructuredHash as the type in a key or value declaration.
+* You can make compound hashes by setting a sublass to ValidatesStructure::StructuredHash as the class in a key or value declaration.
 * You can use a subset of XPath to access attributes in such a way that `my_hash[:apa][:bepa][3]` and `my_hash['//apa/bepa[3]']` are equivalent.
 * It doesn't matter if you access values using strings or symbols; ```my_hash[:apa] ``` and ```my_hash['apa'] ``` are equivalent.
 * Just like when validating fields in a model, you can use your own custom validations.
@@ -133,18 +133,18 @@ This documentation is about the modules, classes, methods and options of Validat
 
 ### ValidatesStructure::StructuredHash
 
-#### self.key(index, type, validations={}, &block)
-Sets up a requirement on the form ```'index' => type``` that are validated with _validations_ and containing children on the form specified in _&block_.
+#### self.key(index, klass, validations={}, &block)
+Sets up a requirement on the form ```'index' => klass``` that are validated with _validations_ and containing children on the form specified in _&block_.
 
 **Parameters**
 
 _index_ - The string or symbol by which to retrieve the value
 
-_type_ - The required class of the value. If type is a subclass of ValidatesStructure::StructuredHash then the value is validated as specified in its definition.
+_klass_ - The required class of the value. If klass is a subclass of ValidatesStructure::StructuredHash then the value is validated as specified in its definition.
 
 _validations_ - A hash with [ActiveModel:Validations](http://api.rubyonrails.org/classes/ActiveModel/Validations/HelperMethods.html) on the same format as for the [validates](http://apidock.com/rails/ActiveModel/Validations/ClassMethods/validates) method.
 
-_&block_ - A block of nested _key_ and/or _value_ declarations. Only applicable if the type can be accessed using []= eg. Arrays and Hashes.
+_&block_ - A block of nested _key_ and/or _value_ declarations. Only applicable if klass can be accessed using []= eg. Arrays and Hashes.
 
 
 **Returns**
@@ -152,16 +152,16 @@ _&block_ - A block of nested _key_ and/or _value_ declarations. Only applicable 
 A String. The current context as the XPath location of the parent or the root '//'.
 
 
-#### self.value(type, validations={}, &block)
+#### self.value(klass, validations={}, &block)
 Sets up a requirement like self.key but without an index. Useful for structures that are accessed by a numeric index such as Arrays.
 
 **Parameters**
 
-_type_ - The required class of the value. If type is a subclass of ValidatesStructure::StructuredHash then the value is validated as specified in its definition.
+_klass_ - The required class of the value. If klass is a subclass of ValidatesStructure::StructuredHash then the value is validated as specified in its definition.
 
 _validations_ - A hash with [ActiveModel:Validations](http://api.rubyonrails.org/classes/ActiveModel/Validations/HelperMethods.html) on the same format as for the [validates](http://apidock.com/rails/ActiveModel/Validations/ClassMethods/validates) method.
 
-_&block_ - A block of nested _key_ and/or _value_ declarations. Only applicable if the type can be accessed using []= eg. Arrays and Hashes.
+_&block_ - A block of nested _key_ and/or _value_ declarations. Only applicable if klass can be accessed using []= eg. Arrays and Hashes.
 
 
 **Returns**

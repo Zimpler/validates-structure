@@ -12,16 +12,24 @@ module ValidatesStructure
     class_attribute :context, instance_writer: false
     class_attribute :keys, instance_writer: false
 
+
     def initialize(hash_or_json={})
+      @init_errors = {}
+      @hash = {}
+
       @raw = hash_or_json
-      if hash_or_json.class == String
+      if hash_or_json.is_a? String
         @hash = JSON.parse(hash_or_json).with_indifferent_access
-      else
+      elsif hash_or_json.is_a? Hash
         @hash = hash_or_json.with_indifferent_access
+      else
+        @init_errors['//'] = "expected a String or a Hash but got a #{hash_or_json.class}."
       end
+
+      validate_keys if @init_errors.empty?
     end
 
-    def self.key(key, type, validations={}, &block)
+    def self.key(key, klass, validations={}, &block)
       # Make sure we use the subclass' variables
       unless self.context
         self.context = '//'
@@ -37,8 +45,8 @@ module ValidatesStructure
         self.context += "/#{key}"
       end
 
-      self.keys[self.context] = type
-      validations.merge!(type: { type: type })
+      self.keys[self.context] = klass
+      validations.merge!(klass: { klass: klass })
       validates self.context, validations
 
       if block_given?
@@ -52,8 +60,8 @@ module ValidatesStructure
       end
     end
 
-    def self.value(type, validations={}, &block)
-      validations.merge!(type: { type: type })
+    def self.value(klass, validations={}, &block)
+      validations.merge!(klass: { klass: klass })
       validates self.context, enumerable: validations
 
       self.context += '[*]'
@@ -75,11 +83,15 @@ module ValidatesStructure
 
     def valid?(context=nil)
       super(context)
-      validate_keys
+      copy_init_errors
       errors.empty?
     end
 
     private 
+
+    def copy_init_errors
+      @init_errors.each { |attribute, text| self.errors.add attribute, text }
+    end
 
     def validate_keys(struct=@hash, cont='/')
       if keys[cont] && keys[cont] < StructuredHash
@@ -90,12 +102,12 @@ module ValidatesStructure
           structured_hash.errors.each do |a, m|
             error_desc << "#{a} #{m}"
           end
-          self.errors.add cont, error_desc.join('\n')
+          @init_errors[cont] = error_desc.join('\n')
         end
       elsif struct.is_a? Hash
         struct.each do |key, value|
           cont = "#{cont}/#{key}"
-          self.errors.add(cont, "is not a valid key in #{self.class}.") if !keys.include?(cont)
+          @init_errors[cont] = "is not a valid key in #{self.class}." if !keys.include?(cont)
           validate_keys value, cont
           cont = cont.chomp("/#{key}")
         end
@@ -106,22 +118,22 @@ module ValidatesStructure
       end
     end
 
-    class TypeValidator < ActiveModel::EachValidator
+    class KlassValidator < ActiveModel::EachValidator
       def validate_each(record, attribute, value)
-        return if value.nil? # don't check type if nil
-        type = options[:type]
+        return if value.nil? # don't check class if nil
+        klass = options[:klass]
 
-        if type < ValidatesStructure::StructuredHash
-          # Don't validate type if a subclass of Structured Hash
+        if klass < ValidatesStructure::StructuredHash
+          # Don't validate class if a subclass of Structured Hash
           # This is taken care of in validate_keys.
-        elsif !(value.class <= type)
-          record.errors.add attribute, "has type \"#{value.class}\" but should be a \"#{type}\"."
+        elsif !(value.class <= klass)
+          record.errors.add attribute, "has class \"#{value.class}\" but should be a \"#{klass}\"."
         end
       end
     end
 
     class EnumerableValidator < ActiveModel::EachValidator
-      # Validates each value in an enumerable type using ActiveModel validations.
+      # Validates each value in an enumerable class using ActiveModel validations.
       # Adapted from a snippet by Milovan Zogovic (http://stackoverflow.com/a/12744945)
       def validate_each(record, attribute, values)
         [values].flatten.each_with_index do |value, index|

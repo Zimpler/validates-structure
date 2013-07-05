@@ -45,6 +45,14 @@ describe 'A simple instance of StructuredHash' do
   end
 
   describe 'given a hash with superfluous keys' do
+    it 'should not be valid (empty)' do
+      MySimpleHash.new(nil).should_not be_valid
+    end
+
+    it 'should not be valid (primitive klass)' do
+      MySimpleHash.new(3).should_not be_valid
+    end
+
     it 'should not be valid (simple)' do
       MySimpleHash.new(apa: 1, bepa: 2 ).should_not be_valid
     end
@@ -139,7 +147,7 @@ end
 
 describe 'A compound instance of StructuredHash' do
   class MyInnerHash < ValidatesStructure::StructuredHash
-      key 'bepa', Integer, presence: true, numericality: true
+      key 'bepa', Integer, presence: true
   end
 
   class MyOuterHash < ValidatesStructure::StructuredHash
