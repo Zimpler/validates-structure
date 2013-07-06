@@ -23,10 +23,20 @@ and make sure your rails version is at least 4.0.0:
 gem 'rails', '>=4.0.0'
 ```
 
-Usage Example
+Remember to
+
+```ruby
+require 'validates-structure'
+```
+
+at the top of the file when defining a new structure.
+
+Canonical Usage Example
 ------------
 
 ```ruby
+require 'validates-structure'
+
 class MyStructuredHash < ValidatesStructure::StructuredHash
   key 'apa', Hash, presence: true do
     key 'bepa', Array, presence: true do

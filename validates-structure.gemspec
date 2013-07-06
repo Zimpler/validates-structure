@@ -9,16 +9,15 @@ Gem::Specification.new do |s|
   s.version     = ValidatesStructure::VERSION
   s.authors     = ["Daniel Ström"]
   s.email       = ["D@nielstrom.se"]
-  s.homepage    = "http://pugglepay.com"
-  s.summary     = "Summary of ValidatesStructure."
-  s.description = "Description of ValidatesStructure."
+  s.homepage    = "https://github.com/PugglePay/validates-structure"
+  s.summary     = "Allows the creation of hash structures with ActiveModel::Validations."
+  s.description = "Uses the power and familiarity of ActiveModel::Validations to validate hash structures. Designed for detecting and providing feedback on bad requests to your RESTful Web Service."
 
-  s.files = Dir["{app,config,db,lib}/**/*"] + ["MIT-LICENSE", "Rakefile", "README.rdoc"]
+  s.files = Dir["{app,config,db,lib}/**/*"] + ["LICENSE.txt", "Rakefile", "README.md"]
   s.test_files = Dir["test/**/*"]
 
   s.add_dependency "rails", "~> 4.0.0"
 
-  s.add_development_dependency "sqlite3"
   s.add_development_dependency "rspec"
   s.add_development_dependency "debugger"
 end
