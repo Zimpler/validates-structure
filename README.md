@@ -126,6 +126,23 @@ MyCustomHash.new(apa: 3).valid?
 # => true
 ```
 
+### Custom validator example
+
+```ruby
+class OddValidator < ActiveModel::EachValidator
+  def validate_each(record, attribute, value)
+    record.errors.add attribute, "can't be even." if value.even?
+  end
+end
+
+class MyValidatorHash < ValidatesStructure::StructuredHash
+  key 'apa', Integer, odd: true
+end
+
+MyValidatorHash.new(apa: 3).valid?
+# => true
+```
+
 
 Documentation
 -------------

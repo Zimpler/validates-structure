@@ -230,3 +230,36 @@ describe 'A StructuredHash with an optional key' do
     end
   end
 end
+
+describe 'A StructuredHash with a custom EachValidator' do
+  class OddValidator < ActiveModel::EachValidator
+    def validate_each(record, attribute, value)
+      record.errors.add attribute, "can't be even." if value.even?
+    end
+  end
+
+  class MyValidatorHash < ValidatesStructure::StructuredHash
+    key 'apa', Integer, odd: true
+  end
+
+
+  describe 'given a valid hash' do
+    before :each do
+      @mine = MyValidatorHash.new(apa: 3)
+    end
+    
+    it 'should be valid' do
+      @mine.should be_valid
+    end
+  end
+
+  describe 'given an invalid hash' do
+    before :each do
+      @mine = MyValidatorHash.new(apa: 4)
+    end
+    
+    it 'should not be valid' do
+      @mine.should_not be_valid
+    end
+  end
+end
