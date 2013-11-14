@@ -10,7 +10,7 @@ describe 'A simple instance of StructuredHash' do
       @hash = { apa: 1 }
       @mine = MySimpleHash.new @hash
     end
-    
+
     it 'should respond to ActiveModel validation methods' do
       @mine.should respond_to 'valid?'
       @mine.should respond_to 'errors'
@@ -72,9 +72,35 @@ describe 'A simple instance of StructuredHash' do
     it 'should not be valid (array of hashes)' do
       MySimpleHash.new(apa: [{apa: 1}, {bepa: 1}, {cepa: 1}] ).should_not be_valid
     end
+
+    it 'should not be valid (value type)' do
+      MySimpleHash.new(apa: "string" ).should_not be_valid
+    end
+  end
+end
+
+
+describe 'A StructuredHash with Boolean type' do
+  class MyBooleanHash < ValidatesStructure::StructuredHash
+    key 'apa', Boolean
+  end
+
+  describe 'given a valid hash' do
+    it 'accepts true as value' do
+      MyBooleanHash.new({apa: true}).should be_valid
+    end
+
+    it 'accepts false as value' do
+      MyBooleanHash.new({apa: false}).should be_valid
+    end
+
+    it 'accepts nil as value' do
+      MyBooleanHash.new({apa: nil}).should be_valid
+    end
   end
 
 end
+
 
 describe 'A nested instance of StructuredHash' do
   class MyStructuredHash < ValidatesStructure::StructuredHash
@@ -224,7 +250,7 @@ describe 'A StructuredHash with an optional key' do
     before :each do
       @mine = MyOptionalHash.new({})
     end
-    
+
     it 'should be valid' do
       @mine.should be_valid
     end
@@ -247,7 +273,7 @@ describe 'A StructuredHash with a custom EachValidator' do
     before :each do
       @mine = MyValidatorHash.new(apa: 3)
     end
-    
+
     it 'should be valid' do
       @mine.should be_valid
     end
@@ -257,7 +283,7 @@ describe 'A StructuredHash with a custom EachValidator' do
     before :each do
       @mine = MyValidatorHash.new(apa: 4)
     end
-    
+
     it 'should not be valid' do
       @mine.should_not be_valid
     end

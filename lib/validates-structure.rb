@@ -12,6 +12,9 @@ module ValidatesStructure
     class_attribute :context, instance_writer: false
     class_attribute :keys, instance_writer: false
 
+    # Constant making up for the "missing" ruby class Boolean.
+    class Boolean
+    end
 
     def initialize(hash_or_json={})
       @init_errors = {}
@@ -40,7 +43,7 @@ module ValidatesStructure
       end
 
       if self.context == '//'
-        self.context += "#{key}" 
+        self.context += "#{key}"
       else
         self.context += "/#{key}"
       end
@@ -75,7 +78,7 @@ module ValidatesStructure
 
     def read_attribute_for_validation(key)
       key.to_s.scan(/\w+/i).reduce(@hash) { |dict, k| dict[k] }
-    end    
+    end
 
     def [](key)
       read_attribute_for_validation key.to_s
@@ -87,7 +90,7 @@ module ValidatesStructure
       errors.empty?
     end
 
-    private 
+    private
 
     def copy_init_errors
       @init_errors.each { |attribute, text| self.errors.add attribute, text }
@@ -122,7 +125,11 @@ module ValidatesStructure
         if klass < ValidatesStructure::StructuredHash
           # Don't validate class if a subclass of Structured Hash
           # This is taken care of in validate_keys.
-        elsif !(value.class <= klass)
+        elsif klass == Boolean
+          unless value.is_a?(TrueClass) || value.is_a?(FalseClass)
+            record.errors.add attribute, "has class \"#{value.class}\" but should be a Boolean."
+          end
+        elsif !(value.is_a?(klass))
           record.errors.add attribute, "has class \"#{value.class}\" but should be a \"#{klass}\"."
         end
       end

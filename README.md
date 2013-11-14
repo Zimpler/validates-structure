@@ -57,12 +57,12 @@ Quick facts about Validates Structure
 -------------------------------------
 * Validates Structure uses ActiveModel::Validations to validate your hash.
 * Validates Structure automatically validates the class of each declared entry and will give an error when undeclared keys are present.
+* You can validate that a value are true or false by using the `Boolean` class (even though there are no Boolean class i Ruby).
 * A String given to the ValidatesStructure::StructuredHash::new method will be automatically evaluated as json.
-* You can make compound hashes by setting a sublass to ValidatesStructure::StructuredHash as the class in a key or value declaration.
+* You can make compound hashes by setting a subclass to ValidatesStructure::StructuredHash as the class in a key or value declaration.
 * You can use a subset of XPath to access attributes in such a way that `my_hash[:apa][:bepa][3]` and `my_hash['//apa/bepa[3]']` are equivalent.
 * It doesn't matter if you access values using strings or symbols; ```my_hash[:apa] ``` and ```my_hash['apa'] ``` are equivalent.
 * Just like when validating fields in a model, you can use your own custom validations.
-
 
 Examples
 --------
@@ -75,6 +75,17 @@ class MySimpleHash < ValidatesStructure::StructuredHash
 end
 
 MySimpleHash.new(apa: 3).valid?
+# => true
+```
+
+### Boolean example
+
+```ruby
+class MySimpleHash < ValidatesStructure::StructuredHash
+  key 'apa', Boolean
+end
+
+MySimpleHash.new(apa: true).valid?
 # => true
 ```
 
