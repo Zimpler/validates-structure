@@ -49,7 +49,8 @@ module ValidatesStructure
       end
 
       self.keys[self.context] = klass
-      validations.merge!(klass: { klass: klass })
+      validations[:klass] = { klass: klass }
+      validations[:not_nil] = true unless validations[:allow_nil] == true
       validates self.context, validations
 
       if block_given?
@@ -64,7 +65,8 @@ module ValidatesStructure
     end
 
     def self.value(klass, validations={}, &block)
-      validations.merge!(klass: { klass: klass })
+      validations[:klass] = { klass: klass }
+      validations[:not_nil] = true unless validations[:allow_nil] == true
       validates self.context, enumerable: validations
 
       self.context += '[*]'
@@ -127,10 +129,18 @@ module ValidatesStructure
           # This is taken care of in validate_keys.
         elsif klass == Boolean
           unless value.is_a?(TrueClass) || value.is_a?(FalseClass)
-            record.errors.add attribute, "has class \"#{value.class}\" but should be a Boolean."
+            record.errors.add attribute, "has class \"#{value.class}\" but should be a Boolean"
           end
         elsif !(value.is_a?(klass))
-          record.errors.add attribute, "has class \"#{value.class}\" but should be a \"#{klass}\"."
+          record.errors.add attribute, "has class \"#{value.class}\" but should be a \"#{klass}\""
+        end
+      end
+    end
+
+    class NotNilValidator < ActiveModel::EachValidator
+      def validate_each(record, attribute, value)
+        if value.nil?
+          record.errors.add attribute, "must not be nil"
         end
       end
     end
@@ -146,6 +156,8 @@ module ValidatesStructure
 
             next if value.nil? && validator_options[:allow_nil]
             next if value.blank? && validator_options[:allow_blank]
+            next if key.to_s == "allow_nil"
+            next if key.to_s == "allow_blank"
 
             validator_class_name = "ValidatesStructure::StructuredHash::#{key.to_s.camelize}Validator"
             validator_class = begin

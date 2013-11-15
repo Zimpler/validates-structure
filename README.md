@@ -37,20 +37,22 @@ Canonical Usage Example
 ```ruby
 require 'validates-structure'
 
-class MyStructuredHash < ValidatesStructure::StructuredHash
-  key 'apa', Hash, presence: true do
-    key 'bepa', Array, presence: true do
-      value Integer, presence: true
+class MyCanonicalHash < ValidatesStructure::StructuredHash
+  key 'apa', Hash do
+    key 'bepa', Array do
+      value Integer, allow_nil: true
     end
+    key 'cepa', String, format: /\A[0-f]\z/
   end
 end
 
-my_hash = MyStructuredHash.new({apa: {bepa: [2, 3, 'invalid']}})
+my_hash = MyCanonicalHash.new({apa: {bepa: [1, 2, nil, 'invalid']}})
 my_hash.valid?
 # => false
-my_hash.errors.full_messages.join('\n')
-# => //apa/bepa[2]: has class "String" but should be a "Integer".
-
+puts my_hash.errors.full_messages
+# => //apa/bepa[3] has class "String" but should be a "Integer"
+# => //apa/cepa is invalid
+# => //apa/cepa must not be nil
 ```
 
 Quick facts about Validates Structure
@@ -71,7 +73,7 @@ Examples
 
 ```ruby
 class MySimpleHash < ValidatesStructure::StructuredHash
-  key 'apa', Integer, presence: true
+  key 'apa', Integer
 end
 
 MySimpleHash.new(apa: 3).valid?
@@ -81,34 +83,34 @@ MySimpleHash.new(apa: 3).valid?
 ### Boolean example
 
 ```ruby
-class MySimpleHash < ValidatesStructure::StructuredHash
+class MyBooleanHash < ValidatesStructure::StructuredHash
   key 'apa', Boolean
 end
 
-MySimpleHash.new(apa: true).valid?
+MyBooleanHash.new(apa: true).valid?
 # => true
 ```
 
 ### Nested example
 
 ```ruby
-class MyStructuredHash < ValidatesStructure::StructuredHash
-  key 'apa', Hash, presence: true do
-    key 'bepa', Integer, presence: true, format: { with: /3/i}
+class MyNestedHash < ValidatesStructure::StructuredHash
+  key 'apa', Hash do
+    key 'bepa', String, presence: true
   end
 end
 
-MyStructuredHash.new(apa: { bepa: 3 }).valid?
-# => true
+MyNestedHash.new(apa: { bepa: "" }).valid?
+# => false
 ```
 
 ### Array example
 
 ```ruby
 class MyArrayHash < ValidatesStructure::StructuredHash
-  key 'apa', Hash, presence: true do
-    key 'bepa', Array, presence: true do
-      value Integer, presence: true
+  key 'apa', Hash do
+    key 'bepa', Array do
+      value Integer
     end
   end
 end
@@ -121,11 +123,11 @@ MyArrayHash.new(apa: { bepa: [1, 2, 3] }).valid?
 
 ```ruby
 class MyInnerHash < ValidatesStructure::StructuredHash
-    key 'bepa', Integer, presence: true
+  key 'bepa', Integer
 end
 
 class MyOuterHash < ValidatesStructure::StructuredHash
-  key 'apa', MyInnerHash, presence: true
+  key 'apa', MyInnerHash
 end
 
 MyInnerHash.new(apa: { bepa: 3 }).valid?
@@ -136,7 +138,7 @@ MyInnerHash.new(apa: { bepa: 3 }).valid?
 
 ```ruby
 class MyCustomHash < ValidatesStructure::StructuredHash
-  key 'apa', Integer, presence: true, with: :validate_odd
+  key 'apa', Integer, with: :validate_odd
 
   def validate_odd(attribute)
     errors.add attribute, "can't be even." if self[attribute].even?
@@ -190,7 +192,7 @@ _&block_ - A block of nested _key_ and/or _value_ declarations. Only applicable 
 A String. The current context as the XPath location of the parent or the root '//'.
 
 
-#### self.value(klass, validations={}, &block)
+#### self.value(klass, validations={},&block)
 Sets up a requirement like self.key but without an index. Useful for structures that are accessed by a numeric index such as Arrays.
 
 **Parameters**
@@ -214,8 +216,8 @@ Using several value declarations will merge the validations into a single valida
 ```ruby
 class MySimpleHash < ValidatesStructure::StructuredHash
   key 'apa', Array do
-  	value Integer, presence: true
-  	value String, presence: true
+  	value Integer
+  	value String
   end
 end
 ```

@@ -85,20 +85,103 @@ describe 'A StructuredHash with Boolean type' do
     key 'apa', Boolean
   end
 
-  describe 'given a valid hash' do
-    it 'accepts true as value' do
-      MyBooleanHash.new({apa: true}).should be_valid
-    end
+  it 'accepts true as value' do
+    MyBooleanHash.new({apa: true}).should be_valid
+  end
 
-    it 'accepts false as value' do
-      MyBooleanHash.new({apa: false}).should be_valid
-    end
+  it 'accepts false as value' do
+    MyBooleanHash.new({apa: false}).should be_valid
+  end
 
-    it 'accepts nil as value' do
-      MyBooleanHash.new({apa: nil}).should be_valid
+  it 'does not accepts nil as value' do
+    MyBooleanHash.new({apa: nil}).should_not be_valid
+  end
+
+  it 'does not accept the wrong class' do
+    MyBooleanHash.new({apa: 5}).should_not be_valid
+  end
+end
+
+
+describe 'A StructuredHash with optional keys' do
+  class MyOptionalKeyHash < ValidatesStructure::StructuredHash
+    key 'apa', Integer, allow_nil: true
+  end
+
+  it 'accepts a value' do
+    MyOptionalKeyHash.new({apa: 5}).should be_valid
+  end
+
+  it 'accepts nil as a value' do
+    MyOptionalKeyHash.new({apa: nil}).should be_valid
+  end
+
+  it 'accepts if the key is missing' do
+    MyOptionalKeyHash.new({}).should be_valid
+  end
+end
+
+
+describe 'A StructuredHash with optional hash' do
+  class MyOptionallyHashHash < ValidatesStructure::StructuredHash
+    key 'apa', Hash, allow_nil: true
+  end
+
+  it 'accepts an empty hash' do
+    MyOptionallyHashHash.new({apa: {}}).should be_valid
+  end
+
+  it 'accepts nil as a value' do
+    MyOptionallyHashHash.new({apa: nil}).should be_valid
+  end
+
+  it 'accepts if the key is missing' do
+    MyOptionallyHashHash.new({}).should be_valid
+  end
+end
+
+
+describe 'A StructuredHash with optional array values' do
+  class MyOptionallyArrayHash < ValidatesStructure::StructuredHash
+    key 'apa', Array do
+      value Integer, allow_nil: true
     end
   end
 
+  it 'accepts an array with values' do
+    MyOptionallyArrayHash.new({apa: [1,2]}).should be_valid
+  end
+
+  it 'accepts requires an array as the array key is not optional' do
+    MyOptionallyArrayHash.new({apa: nil}).should_not be_valid
+  end
+
+  it 'accepts an array that includes nil values' do
+    MyOptionallyArrayHash.new({apa: [1,nil,2]}).should be_valid
+  end
+
+  it 'accepts an empty array' do
+    MyOptionallyArrayHash.new({apa: []}).should be_valid
+  end
+end
+
+
+describe 'A StructuredHash with mandatory keys' do
+  class MyMandatoryKeyHash < ValidatesStructure::StructuredHash
+    key 'apa', Integer, presence: true
+  end
+
+  it 'accepts a value' do
+    MyMandatoryKeyHash.new({apa: 5}).should be_valid
+  end
+
+  it 'does not accepts nil as a value' do
+    MyMandatoryKeyHash.new({apa: nil}).should_not be_valid
+  end
+
+  it 'does not accepts if the key is missing' do
+    MyMandatoryKeyHash.new({}).should_not be_valid
+  end
 end
 
 
@@ -237,22 +320,6 @@ describe 'A StructuredHash with a custom validation' do
 
     it 'should not be valid' do
       @mine.should_not be_valid
-    end
-  end
-end
-
-describe 'A StructuredHash with an optional key' do
-  class MyOptionalHash < ValidatesStructure::StructuredHash
-    key 'apa', Integer
-  end
-
-  describe 'given a hash without the key' do
-    before :each do
-      @mine = MyOptionalHash.new({})
-    end
-
-    it 'should be valid' do
-      @mine.should be_valid
     end
   end
 end
