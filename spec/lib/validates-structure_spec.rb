@@ -216,7 +216,7 @@ describe Validator do
       v = @c.new({ a: { b: 1, c: 1} })
       v.should_not be_valid
       v.errors.full_messages.should eq [
-        "B has class \"Fixnum\" but should be a \"String\""
+        "A / B has class \"Fixnum\" but should be a \"String\""
       ]
     end
 
@@ -309,7 +309,7 @@ describe Validator do
         v = @c.new({ a: [{}, 1, 2] })
         v.should_not be_valid
         v.errors.full_messages.should eq [
-          "B must not be nil",
+          "A / B must not be nil",
           "A has class \"Fixnum\" but should be a \"Hash\"",
           "A has class \"Fixnum\" but should be a \"Hash\""
         ]
@@ -337,8 +337,8 @@ describe Validator do
         v = @c.new({ a: [{ c: 3}], b: [{ c: "one" }] })
         v.should_not be_valid
         v.errors.full_messages.should eq [
-          "C has class \"Fixnum\" but should be a \"String\"",
-          "C has class \"String\" but should be a \"Integer\""
+          "A / C has class \"Fixnum\" but should be a \"String\"",
+          "B / C has class \"String\" but should be a \"Integer\""
         ]
       end
     end
@@ -368,7 +368,7 @@ describe Validator do
       v = @c.new({ a: { c: 1 }, b: 2 })
       v.should_not be_valid
       v.errors.full_messages.should eq [
-        "C has class \"Fixnum\" but should be a \"String\"",
+        "A / C has class \"Fixnum\" but should be a \"String\"",
         "B has class \"Fixnum\" but should be a \"String\""
       ]
     end
@@ -396,4 +396,33 @@ describe Validator do
     end
   end
 
+  describe 'With a namespaced validator' do
+    module V3
+      module Annoying
+        class MyValidatorBase < ValidatesStructure::Validator
+          class MyOddValidator < ActiveModel::EachValidator
+            def validate_each(record, attribute, value)
+              record.errors.add attribute, "can't be even" if value.even?
+            end
+          end
+        end
+
+        class MyValidator < MyValidatorBase
+          key :a, Integer, my_odd: true
+          key :nested, Hash, allow_nil: true do
+            key :b, Integer, my_odd: true
+          end
+        end
+      end
+    end
+
+    it "uses the custom validation" do
+      v = V3::Annoying::MyValidator.new({ a:  2 , nested: { b: 2 }})
+      v.should_not be_valid
+      v.errors.full_messages.should eq [
+        "A can't be even",
+        "Nested / B can't be even"
+      ]
+    end
+  end
 end

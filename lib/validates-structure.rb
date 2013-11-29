@@ -1,6 +1,7 @@
 require 'active_model'
 require 'active_support/core_ext'
 require 'json'
+require 'securerandom'
 
 module ValidatesStructure
 
@@ -97,7 +98,9 @@ module ValidatesStructure
       elsif block_given?
         case
         when klass == Hash
-          validator = Class.new(Validator)
+          klass_name = "Annonimous#{ key.to_s.camelize }Validator#{SecureRandom.uuid.tr('-','')}"
+          const_set(klass_name, Class.new(self.superclass))
+          validator = const_get(klass_name)
           validator.instance_eval(&block)
           self.nested_validators[key] = validator
         when klass == Array
@@ -149,8 +152,8 @@ module ValidatesStructure
 
         nested = validator.new(value)
         nested.valid?
-        nested.errors.each do |attribute, error|
-          record.errors.add(attribute, error)
+        nested.errors.full_messages.each do |message|
+          record.errors.add(attribute, "/ " + message)
         end
       end
     end
