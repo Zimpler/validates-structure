@@ -68,6 +68,10 @@ module ValidatesStructure
       nest_dsl(klass, @nested_array_key, &block)
     end
 
+    def self.human_attribute_name(attr, *)
+      "/#{attr}"
+    end
+
     validate do
       (keys - self.class.keys).each do |key|
         errors.add(key, "is not a known key")
@@ -152,8 +156,8 @@ module ValidatesStructure
 
         nested = validator.new(value)
         nested.valid?
-        nested.errors.full_messages.each do |message|
-          record.errors.add(attribute, "/ " + message)
+        nested.errors.each do |nested_attribute, message|
+          record.errors.add("#{attribute}/#{nested_attribute}", message)
         end
       end
     end
@@ -173,19 +177,20 @@ module ValidatesStructure
             next if key.to_s == "allow_nil"
             next if key.to_s == "allow_blank"
 
-            validator_class_name = "ValidatesStructure::Validator::#{key.to_s.camelize}Validator"
-            validator_class = begin
-              validator_class_name.constantize
-            rescue NameError
-              "ActiveModel::Validations::#{validator_class_name}".constantize
-            end
-
+            validator_class_name = "#{key.to_s.camelize}Validator"
+            validator_class = self.class.parent.const_get(validator_class_name)
             validator = validator_class.new(validator_options)
-            validator.validate_each(record, attribute, value)
+
+            # TODO: There should be a better way!
+            tmp_record = record.dup
+            validator.validate_each(tmp_record, attribute, value)
+            tmp_record.errors.each do |nested_attribute, error|
+              indexed_attribute = nested_attribute.to_s.sub(/^#{attribute}/, "#{attribute}[#{index}]")
+              record.errors.add(indexed_attribute, error)
+            end
           end
         end
       end
     end
-
   end
 end

@@ -116,7 +116,7 @@ describe Validator do
       v = @c.new({ a: 5 })
       v.should_not be_valid
       v.errors.full_messages.should eq [
-        "A has class \"Fixnum\" but should be a \"String\""
+        "/a has class \"Fixnum\" but should be a \"String\""
       ]
     end
   end
@@ -144,7 +144,7 @@ describe Validator do
       v = @c.new({ a: "true" })
       v.should_not be_valid
       v.errors.full_messages.should eq [
-        "A has class \"String\" but should be boolean"
+        "/a has class \"String\" but should be boolean"
       ]
     end
   end
@@ -156,7 +156,7 @@ describe Validator do
       end
       v = @c.new({})
       v.should_not be_valid
-      v.errors.full_messages.should eq ["A must not be nil"]
+      v.errors.full_messages.should eq ["/a must not be nil"]
     end
 
     it "makes the key optional if present" do
@@ -186,7 +186,7 @@ describe Validator do
       end
       v = @c.new({ a: 1 })
       v.should_not be_valid
-      v.errors.full_messages.should eq ["A is not a known key"]
+      v.errors.full_messages.should eq ["/a is not a known key"]
     end
   end
 
@@ -198,7 +198,7 @@ describe Validator do
       @c.new({ a: "string" }).should be_valid
       v = @c.new({ a: "" })
       v.should_not be_valid
-      v.errors.full_messages.should eq ["A can't be blank"]
+      v.errors.full_messages.should eq ["/a can't be blank"]
     end
   end
 
@@ -216,7 +216,7 @@ describe Validator do
       v = @c.new({ a: { b: 1, c: 1} })
       v.should_not be_valid
       v.errors.full_messages.should eq [
-        "A / B has class \"Fixnum\" but should be a \"String\""
+        "/a/b has class \"Fixnum\" but should be a \"String\""
       ]
     end
 
@@ -224,7 +224,7 @@ describe Validator do
       v = @c.new({ a: 1 })
       v.should_not be_valid
       v.errors.full_messages.should eq [
-        "A has class \"Fixnum\" but should be a \"Hash\""
+        "/a has class \"Fixnum\" but should be a \"Hash\""
       ]
     end
 
@@ -262,7 +262,7 @@ describe Validator do
         v = @c.new({ a: "string" })
         v.should_not be_valid
         v.errors.full_messages.should eq [
-          "A has class \"String\" but should be a \"Array\""
+          "/a has class \"String\" but should be a \"Array\""
         ]
       end
 
@@ -271,8 +271,8 @@ describe Validator do
         v = @c.new({ a: ["one", 1, 2] })
         v.should_not be_valid
         v.errors.full_messages.should eq [
-          "A has class \"Fixnum\" but should be a \"String\"",
-          "A has class \"Fixnum\" but should be a \"String\""
+          "/a[1] has class \"Fixnum\" but should be a \"String\"",
+          "/a[2] has class \"Fixnum\" but should be a \"String\""
         ]
       end
     end
@@ -300,7 +300,7 @@ describe Validator do
         v = @c.new({ a: "string" })
         v.should_not be_valid
         v.errors.full_messages.should eq [
-          "A has class \"String\" but should be a \"Array\""
+          "/a has class \"String\" but should be a \"Array\""
         ]
       end
 
@@ -309,9 +309,9 @@ describe Validator do
         v = @c.new({ a: [{}, 1, 2] })
         v.should_not be_valid
         v.errors.full_messages.should eq [
-          "A / B must not be nil",
-          "A has class \"Fixnum\" but should be a \"Hash\"",
-          "A has class \"Fixnum\" but should be a \"Hash\""
+          "/a[0]/b must not be nil",
+          "/a[1] has class \"Fixnum\" but should be a \"Hash\"",
+          "/a[2] has class \"Fixnum\" but should be a \"Hash\""
         ]
       end
     end
@@ -337,8 +337,8 @@ describe Validator do
         v = @c.new({ a: [{ c: 3}], b: [{ c: "one" }] })
         v.should_not be_valid
         v.errors.full_messages.should eq [
-          "A / C has class \"Fixnum\" but should be a \"String\"",
-          "B / C has class \"String\" but should be a \"Integer\""
+          "/a[0]/c has class \"Fixnum\" but should be a \"String\"",
+          "/b[0]/c has class \"String\" but should be a \"Integer\""
         ]
       end
     end
@@ -368,8 +368,8 @@ describe Validator do
       v = @c.new({ a: { c: 1 }, b: 2 })
       v.should_not be_valid
       v.errors.full_messages.should eq [
-        "A / C has class \"Fixnum\" but should be a \"String\"",
-        "B has class \"Fixnum\" but should be a \"String\""
+        "/a/c has class \"Fixnum\" but should be a \"String\"",
+        "/b has class \"Fixnum\" but should be a \"String\""
       ]
     end
   end
@@ -391,7 +391,7 @@ describe Validator do
       v = @c.new({ a:  2 })
       v.should_not be_valid
       v.errors.full_messages.should eq [
-        "A can't be even"
+        "/a can't be even"
       ]
     end
   end
@@ -420,8 +420,8 @@ describe Validator do
       v = V3::Annoying::MyValidator.new({ a:  2 , nested: { b: 2 }})
       v.should_not be_valid
       v.errors.full_messages.should eq [
-        "A can't be even",
-        "Nested / B can't be even"
+        "/a can't be even",
+        "/nested/b can't be even"
       ]
     end
   end
