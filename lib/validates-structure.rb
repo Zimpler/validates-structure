@@ -1,135 +1,129 @@
 require 'active_model'
-require 'active_model'
 require 'active_support/core_ext'
 require 'json'
 
 module ValidatesStructure
-  class StructuredHash
+
+  class Validator
     include ActiveModel::Validations
 
-    attr_reader :raw
-
-    class_attribute :context, instance_writer: false
     class_attribute :keys, instance_writer: false
+    class_attribute :values, instance_writer: false
+    class_attribute :nested_validators, instance_writer: false
 
-    # Constant making up for the "missing" ruby class Boolean.
-    class Boolean
-    end
+    attr_accessor :keys
 
-    def initialize(hash_or_json={})
-      @init_errors = {}
-      @hash = {}
+    def initialize(hash)
+      self.class.initialize_class_attributes
+      self.keys = []
 
-      @raw = hash_or_json
-      if hash_or_json.is_a? String
-        @hash = JSON.parse(hash_or_json).with_indifferent_access
-      elsif hash_or_json.is_a? Hash
-        @hash = hash_or_json.with_indifferent_access
-      else
-        @init_errors['//'] = "expected a String or a Hash but got a #{hash_or_json.class}."
+      return unless hash.is_a?(Hash)
+
+      hash.each do |key, value|
+        self.keys << key.to_s
+        send "#{key}=", value if respond_to? "#{key}="
       end
-
-      validate_keys if @init_errors.empty?
     end
 
     def self.key(key, klass, validations={}, &block)
-      # Make sure we use the subclass' variables
-      unless self.context
-        self.context = '//'
+      initialize_class_attributes
+      key = key.to_s
+
+      if klass.class != Class
+        raise ArgumentError.new("Types must be given as classes")
+      end
+      unless @nested_array_key.nil?
+        raise ArgumentError.new("Key can not only appear within a block of a key of type Array")
+      end
+      if keys.include?(key)
+        raise ArgumentError.new("Dublicate key \"#{key}\"")
       end
 
-      unless self.keys
-        self.keys = {}
-      end
+      keys << key
+      attr_accessor key
 
-      if self.context == '//'
-        self.context += "#{key}"
-      else
-        self.context += "/#{key}"
-      end
+      validations = prepare_validations(klass, validations, &block)
+      validates key, validations
 
-      self.keys[self.context] = klass
-      validations[:klass] = { klass: klass }
-      validations[:not_nil] = true unless validations[:allow_nil] == true
-      validates self.context, validations
-
-      if block_given?
-        yield
-      end
-
-      if self.context == "//#{key}"
-        self.context = self.context.chomp("#{key}")
-      else
-        self.context = self.context.chomp("/#{key}")
-      end
+      nest_dsl(klass, key, &block)
     end
 
     def self.value(klass, validations={}, &block)
-      validations[:klass] = { klass: klass }
-      validations[:not_nil] = true unless validations[:allow_nil] == true
-      validates self.context, enumerable: validations
+      initialize_class_attributes
 
-      self.context += '[*]'
-
-      if block_given?
-        yield
+      if klass.class != Class
+        raise ArgumentError.new("Types must be given as classes")
       end
+      if @nested_array_key.nil?
+        raise ArgumentError.new("Value can only appear within the block of a key of Array type")
+      end
+      if values[@nested_array_key]
+        raise ArgumentError.new("Value can only appear once within a block")
+      end
+      values[@nested_array_key] = klass
 
-      self.context = self.context.chomp('[*]')
+      validations = prepare_validations(klass, validations, &block)
+      validates @nested_array_key, enumerable: validations
+      nest_dsl(klass, @nested_array_key, &block)
     end
 
-    def read_attribute_for_validation(key)
-      key.to_s.scan(/\w+/i).reduce(@hash) { |dict, k| dict[k] }
+    validate do
+      (keys - self.class.keys).each do |key|
+        errors.add(key, "is not a known key")
+      end
     end
 
-    def [](key)
-      read_attribute_for_validation key.to_s
+  protected
+
+    def self.initialize_class_attributes
+      self.keys ||= []
+      self.values ||= {}
+      self.nested_validators ||= {}
     end
 
-    def valid?(context=nil)
-      super(context)
-      copy_init_errors
-      errors.empty?
+    def self.prepare_validations(klass, validations, &block)
+      validations = validations.dup
+      validations[:klass] = { klass: (klass.ancestors.include?(Validator) ? Hash : klass) }
+      unless validations[:allow_nil] == true || validations[:allow_blank] == true
+        validations[:not_nil] = true
+      end
+      validations[:nested] = true if block_given? || klass.ancestors.include?(Validator)
+      validations
     end
 
-    private
-
-    def copy_init_errors
-      @init_errors.each { |attribute, text| self.errors.add attribute, text }
-    end
-
-    def validate_keys(struct=@hash, cont='/')
-      if keys[cont] && keys[cont] < StructuredHash
-        # Leave validation to the StructuredHash
-        structured_hash = keys[cont].new(struct)
-        if !structured_hash.valid?
-          @init_errors[cont] = structured_hash.errors.full_messages.join('\n')
-        end
-      elsif struct.is_a? Hash
-        struct.each do |key, value|
-          cont = "#{cont}/#{key}"
-          @init_errors[cont] = "is not a valid key in #{self.class}." if !keys.include?(cont)
-          validate_keys value, cont
-          cont = cont.chomp("/#{key}")
-        end
-      elsif struct.is_a? Array
-        struct.each do |entry|
-          validate_keys entry, "#{cont}[*]"
+    def self.nest_dsl(klass, key, &block)
+      if klass.ancestors.include?(Validator)
+        self.nested_validators[key] = klass
+      elsif block_given?
+        case
+        when klass == Hash
+          validator = Class.new(Validator)
+          validator.instance_eval(&block)
+          self.nested_validators[key] = validator
+        when klass == Array
+          @nested_array_key = key
+          yield
+          @nested_array_key = nil
+        else
+          raise ArgumentError.new("Didn't expect a block for the type \"#{klass}\"")
         end
       end
+    end
+
+    def self.model_name
+      ActiveModel::Name.new(self, nil, "temp")
+    end
+
+    class Boolean
     end
 
     class KlassValidator < ActiveModel::EachValidator
       def validate_each(record, attribute, value)
-        return if value.nil? # don't check class if nil
+        return if value.nil?
         klass = options[:klass]
-
-        if klass < ValidatesStructure::StructuredHash
-          # Don't validate class if a subclass of Structured Hash
-          # This is taken care of in validate_keys.
-        elsif klass == Boolean
+        if klass == Boolean
           unless value.is_a?(TrueClass) || value.is_a?(FalseClass)
-            record.errors.add attribute, "has class \"#{value.class}\" but should be a Boolean"
+            record.errors.add attribute, "has class \"#{value.class}\" but should be boolean"
           end
         elsif !(value.is_a?(klass))
           record.errors.add attribute, "has class \"#{value.class}\" but should be a \"#{klass}\""
@@ -145,11 +139,28 @@ module ValidatesStructure
       end
     end
 
+    class NestedValidator < ActiveModel::EachValidator
+      def validate_each(record, attribute, value)
+        return unless value.is_a?(Hash)
+        return if record.errors.keys.map(&:to_s).include?(attribute)
+
+        validator = record.class.nested_validators[attribute]
+        return if validator.nil?
+
+        nested = validator.new(value)
+        nested.valid?
+        nested.errors.each do |attribute, error|
+          record.errors.add(attribute, error)
+        end
+      end
+    end
+
     class EnumerableValidator < ActiveModel::EachValidator
       # Validates each value in an enumerable class using ActiveModel validations.
       # Adapted from a snippet by Milovan Zogovic (http://stackoverflow.com/a/12744945)
       def validate_each(record, attribute, values)
-        [values].flatten.each_with_index do |value, index|
+        return unless values.respond_to?(:each_with_index)
+        values.each_with_index do |value, index|
           options.each do |key, args|
             validator_options = { attributes: attribute }
             validator_options.merge!(args) if args.is_a?(Hash)
@@ -159,7 +170,7 @@ module ValidatesStructure
             next if key.to_s == "allow_nil"
             next if key.to_s == "allow_blank"
 
-            validator_class_name = "ValidatesStructure::StructuredHash::#{key.to_s.camelize}Validator"
+            validator_class_name = "ValidatesStructure::Validator::#{key.to_s.camelize}Validator"
             validator_class = begin
               validator_class_name.constantize
             rescue NameError
@@ -167,7 +178,7 @@ module ValidatesStructure
             end
 
             validator = validator_class.new(validator_options)
-            validator.validate_each(record, attribute + "[#{index}]", value)
+            validator.validate_each(record, attribute, value)
           end
         end
       end
