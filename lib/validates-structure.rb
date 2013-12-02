@@ -1,6 +1,4 @@
 require 'active_model'
-require 'active_support/core_ext'
-require 'json'
 require 'securerandom'
 
 module ValidatesStructure

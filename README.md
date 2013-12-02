@@ -6,7 +6,7 @@ Validates Structure allows you to easily validate hash-structures using ActiveMo
 
 Dependencies
 ------------
-The gem works for Rails 4 and above.
+The gem works for ActiveModel 4 and above.
 
 
 Installation
@@ -17,10 +17,10 @@ Simply add the gem to your gemfile:
 gem 'validates-structure'
 ```
 
-and make sure your rails version is at least 4.0.0:
+and make sure your activemodel version is at least 4.0.0:
 
 ```ruby
-gem 'rails', '>=4.0.0'
+gem 'activemodel', '>=4.0.0'
 ```
 
 Remember to
@@ -37,34 +37,32 @@ Canonical Usage Example
 ```ruby
 require 'validates-structure'
 
-class MyCanonicalHash < ValidatesStructure::StructuredHash
-  key 'apa', Hash do
-    key 'bepa', Array do
+class MyCanonicalValidator < ValidatesStructure::Validator
+  key 'foo', Hash do
+    key 'bar', Array do
       value Integer, allow_nil: true
     end
-    key 'cepa', String, format: /\A[0-f]\z/
+    key 'baz', String, format: /\A[0-f]\z/
   end
 end
 
-my_hash = MyCanonicalHash.new({apa: {bepa: [1, 2, nil, 'invalid']}})
-my_hash.valid?
+validator = MyCanonicalValidator.new({foo: {bar: [1, 2, nil, 'invalid']}})
+validator.valid?
 # => false
-puts my_hash.errors.full_messages
-# => //apa/bepa[3] has class "String" but should be a "Integer"
-# => //apa/cepa is invalid
-# => //apa/cepa must not be nil
+puts validator.errors.full_messages
+# => /foo/bar[3] has class "String" but should be a "Integer"
+# => /foo/baz is invalid
+# => /foo/baz must not be nil
 ```
 
 Quick facts about Validates Structure
 -------------------------------------
 * Validates Structure uses ActiveModel::Validations to validate your hash.
-* Validates Structure automatically validates the class of each declared entry and will give an error when undeclared keys are present.
+* Validates Structure automatically validates the type of each declared entry and will also give an error when undeclared keys are present.
 * You can validate that a value are true or false by using the `Boolean` class (even though there are no Boolean class i Ruby).
-* A String given to the ValidatesStructure::StructuredHash::new method will be automatically evaluated as json.
-* You can make compound hashes by setting a subclass to ValidatesStructure::StructuredHash as the class in a key or value declaration.
-* You can use a subset of XPath to access attributes in such a way that `my_hash[:apa][:bepa][3]` and `my_hash['//apa/bepa[3]']` are equivalent.
-* It doesn't matter if you access values using strings or symbols; ```my_hash[:apa] ``` and ```my_hash['apa'] ``` are equivalent.
-* Just like when validating fields in a model, you can use your own custom validations.
+* You can make compound hashes by setting a subclass to ValidatesStructure::Validator as the class in a key or value declaration.
+* It doesn't matter if your structure uses symbols or strings as hash keys.
+* Just like when validating attributes in a model, you can use your own custom validations.
 
 Examples
 --------
@@ -72,42 +70,45 @@ Examples
 ### Minimal example
 
 ```ruby
-class MySimpleHash < ValidatesStructure::StructuredHash
+class MySimpleValidator < ValidatesStructure::Validator
   key 'apa', Integer
 end
 
-MySimpleHash.new(apa: 3).valid?
+MySimpleValidator.new(apa: 3).valid?
 # => true
 ```
 
 ### Boolean example
 
 ```ruby
-class MyBooleanHash < ValidatesStructure::StructuredHash
+class MyBooleanValidator < ValidatesStructure::Validator
   key 'apa', Boolean
 end
 
-MyBooleanHash.new(apa: true).valid?
+MyBooleanValidator.new(apa: true).valid?
 # => true
 ```
 
 ### Nested example
 
 ```ruby
-class MyNestedHash < ValidatesStructure::StructuredHash
+class MyNestedValidator < ValidatesStructure::Validator
   key 'apa', Hash do
     key 'bepa', String, presence: true
   end
 end
 
-MyNestedHash.new(apa: { bepa: "" }).valid?
+validator = MyNestedValidator.new(apa: { bepa: "" })
+validator.valid?
 # => false
+puts validator.errors.full_messages
+# => /apa/bepa can't be blank
 ```
 
 ### Array example
 
 ```ruby
-class MyArrayHash < ValidatesStructure::StructuredHash
+class MyArrayValidator < ValidatesStructure::Validator
   key 'apa', Hash do
     key 'bepa', Array do
       value Integer
@@ -115,37 +116,25 @@ class MyArrayHash < ValidatesStructure::StructuredHash
   end
 end
 
-MyArrayHash.new(apa: { bepa: [1, 2, 3] }).valid?
+validator = MyArrayValidator.new(apa: { bepa: [1, 2, "3"] })
+validator.valid?
 # => true
+puts validator.errors.full_messages
+# => /apa/bepa[2] has class "String" but should be a "Integer"
 ```
 
 ### Compound example
 
 ```ruby
-class MyInnerHash < ValidatesStructure::StructuredHash
+class MyInnerValidator < ValidatesStructure::Validator
   key 'bepa', Integer
 end
 
-class MyOuterHash < ValidatesStructure::StructuredHash
-  key 'apa', MyInnerHash
+class MyOuterValidator < ValidatesStructure::Validator
+  key 'apa', MyInnerValidator
 end
 
-MyInnerHash.new(apa: { bepa: 3 }).valid?
-# => true
-```
-
-### Custom validation example
-
-```ruby
-class MyCustomHash < ValidatesStructure::StructuredHash
-  key 'apa', Integer, with: :validate_odd
-
-  def validate_odd(attribute)
-    errors.add attribute, "can't be even." if self[attribute].even?
-  end
-end
-
-MyCustomHash.new(apa: 3).valid?
+MyOuterValidator.new(apa: { bepa: 3 }).valid?
 # => true
 ```
 
@@ -158,11 +147,11 @@ class OddValidator < ActiveModel::EachValidator
   end
 end
 
-class MyValidatorHash < ValidatesStructure::StructuredHash
+class MyCustomValidator < ValidatesStructure::Validator
   key 'apa', Integer, odd: true
 end
 
-MyValidatorHash.new(apa: 3).valid?
+MyCustomValidator.new(apa: 3).valid?
 # => true
 ```
 
@@ -171,7 +160,7 @@ Documentation
 -------------
 This documentation is about the modules, classes, methods and options of ValidatesStructure. For documentation on ActiveModel::Validations see [the ActiveModel documentation.](http://apidock.com/rails/ActiveModel/Validations/ClassMethods/validates)
 
-### ValidatesStructure::StructuredHash
+### ValidatesStructure::Validator
 
 #### self.key(index, klass, validations={}, &block)
 Sets up a requirement on the form ```'index' => klass``` that are validated with _validations_ and containing children on the form specified in _&block_.
@@ -180,16 +169,11 @@ Sets up a requirement on the form ```'index' => klass``` that are validated with
 
 _index_ - The string or symbol by which to retrieve the value
 
-_klass_ - The required class of the value. If klass is a subclass of ValidatesStructure::StructuredHash then the value is validated as specified in its definition.
+_klass_ - The required class of the value. If klass is a subclass of ValidatesStructure::Validator then the value is validated as specified in its definition.
 
 _validations_ - A hash with [ActiveModel:Validations](http://api.rubyonrails.org/classes/ActiveModel/Validations/HelperMethods.html) on the same format as for the [validates](http://apidock.com/rails/ActiveModel/Validations/ClassMethods/validates) method.
 
-_&block_ - A block of nested _key_ and/or _value_ declarations. Only applicable if klass can be accessed using []= eg. Arrays and Hashes.
-
-
-**Returns**
-
-A String. The current context as the XPath location of the parent or the root '//'.
+_&block_ - A block of nested _key_ and/or _value_ declarations. Only applicable if klass is an Array or Hashe.
 
 
 #### self.value(klass, validations={},&block)
@@ -197,42 +181,11 @@ Sets up a requirement like self.key but without an index. Useful for structures 
 
 **Parameters**
 
-_klass_ - The required class of the value. If klass is a subclass of ValidatesStructure::StructuredHash then the value is validated as specified in its definition.
+_klass_ - The required class of the value. If klass is a subclass of ValidatesStructure::Validator then the value is validated as specified in its definition.
 
 _validations_ - A hash with [ActiveModel:Validations](http://api.rubyonrails.org/classes/ActiveModel/Validations/HelperMethods.html) on the same format as for the [validates](http://apidock.com/rails/ActiveModel/Validations/ClassMethods/validates) method.
 
-_&block_ - A block of nested _key_ and/or _value_ declarations. Only applicable if klass can be accessed using []= eg. Arrays and Hashes.
-
-
-**Returns**
-
-A String. The current context as the XPath location of the parent or the root '//'.
-
-
-**Gotcha**
-
-Using several value declarations will merge the validations into a single validation. The following code would require each element of the Array 'apa' to be both an Integer and a String (and verify presence twice).
-
-```ruby
-class MySimpleHash < ValidatesStructure::StructuredHash
-  key 'apa', Array do
-  	value Integer
-  	value String
-  end
-end
-```
-
-
-#### []=(key)
-Allows you to access your hash using either normal indexes (```my_hash[:apa][:bepa][3]```) or XPath strings (```my_hash['//apa/bepa[3]']```). You are free to use strings, symbols or integers for indexes (```my_hash['apa']['bepa'][:3]```).
-
-**Paramenters**
-
-_key_ - The index or XPath to lookup.
-
-**Returns**
-
-The value of the supplied key.
+_&block_ - A block of nested _key_ and/or _value_ declarations. Only applicable if klass is an Array or Hashe.
 
 
 Some History
