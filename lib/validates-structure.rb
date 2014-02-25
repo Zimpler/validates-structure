@@ -88,7 +88,11 @@ module ValidatesStructure
       validations = validations.dup
       validations[:klass] = { klass: (klass.ancestors.include?(Validator) ? Hash : klass) }
       unless validations[:allow_nil] == true || validations[:allow_blank] == true
-        validations[:not_nil] = true
+        if klass == String
+          validations[:not_blank] = true
+        else
+          validations[:not_nil] = true
+        end
       end
       validations[:nested] = true if block_given? || klass.ancestors.include?(Validator)
       validations
@@ -140,6 +144,14 @@ module ValidatesStructure
       def validate_each(record, attribute, value)
         if value.nil?
           record.errors.add attribute, "must not be nil"
+        end
+      end
+    end
+
+    class NotBlankValidator < ActiveModel::EachValidator
+      def validate_each(record, attribute, value)
+        if value.blank?
+          record.errors.add attribute, "must not be empty"
         end
       end
     end

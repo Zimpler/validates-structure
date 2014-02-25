@@ -149,6 +149,37 @@ describe Validator do
     end
   end
 
+  describe "the not_blank option" do
+    before do
+      @c = Class.new(ValidatesStructure::Validator) do
+        key :a, String
+      end
+    end
+
+    it "is active when no option is specified" do
+      v = @c.new({})
+      v.should_not be_valid
+      v.errors.full_messages.should eq ["/a must not be empty"]
+    end
+
+    it "is invalid when value is nil" do
+      v = @c.new({ a: nil })
+      v.should_not be_valid
+      v.errors.full_messages.should eq ["/a must not be empty"]
+    end
+
+    it "is invalid when value is an empty string '   '" do
+      v = @c.new({ a: "    " })
+      v.should_not be_valid
+      v.errors.full_messages.should eq ["/a must not be empty"]
+    end
+
+    it "is valid when value not empty" do
+      v = @c.new({ a: "    x" })
+      v.should be_valid
+    end
+  end
+
   describe "the allow_nil option" do
     it "makes the key required if option is missing" do
       @c = Class.new(ValidatesStructure::Validator) do
@@ -156,7 +187,7 @@ describe Validator do
       end
       v = @c.new({})
       v.should_not be_valid
-      v.errors.full_messages.should eq ["/a must not be nil"]
+      v.errors.full_messages.should eq ["/a must not be empty"]
     end
 
     it "makes the key optional if present" do
@@ -198,7 +229,7 @@ describe Validator do
       @c.new({ a: "string" }).should be_valid
       v = @c.new({ a: "" })
       v.should_not be_valid
-      v.errors.full_messages.should eq ["/a can't be blank"]
+      v.errors.full_messages.should eq ["/a can't be blank", "/a must not be empty"]
     end
   end
 
@@ -309,7 +340,7 @@ describe Validator do
         v = @c.new({ a: [{}, 1, 2] })
         v.should_not be_valid
         v.errors.full_messages.should eq [
-          "/a[0]/b must not be nil",
+          "/a[0]/b must not be empty",
           "/a[1] has class \"Fixnum\" but should be a \"Hash\"",
           "/a[2] has class \"Fixnum\" but should be a \"Hash\""
         ]
