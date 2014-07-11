@@ -7,7 +7,7 @@ require "validates-structure/version"
 # Describe your gem and declare its dependencies:
 Gem::Specification.new do |s|
   s.name        = "validates-structure"
-  s.version     = "0.1.0"
+  s.version     = ValidatesStructure::VERSION
   s.authors     = ["Magnus Rex", "Daniel Ström", "Jean-Louis Giordano", "Patrik Kårlin"]
   s.email       = ["dev@pugglepay.com"]
   s.homepage    = "https://github.com/PugglePay/validates-structure"
