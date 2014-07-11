@@ -8,7 +8,7 @@ require "validates-structure/version"
 Gem::Specification.new do |s|
   s.name        = "validates-structure"
   s.version     = "0.1.0"
-  s.authors     = ["Magnus Rex", "Daniel Ström", "Jean-Louis Giordano"]
+  s.authors     = ["Magnus Rex", "Daniel Ström", "Jean-Louis Giordano", "Patrik Kårlin"]
   s.email       = ["dev@pugglepay.com"]
   s.homepage    = "https://github.com/PugglePay/validates-structure"
   s.summary     = "ActiveModel validations for nested structures like params."
@@ -21,4 +21,6 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency "rspec"
   s.add_development_dependency "debugger"
+  s.add_development_dependency "guard"
+  s.add_development_dependency "guard-rspec"
 end
