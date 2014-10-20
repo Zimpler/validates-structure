@@ -10,7 +10,7 @@ module ValidatesStructure
     class_attribute :values, instance_writer: false
     class_attribute :nested_validators, instance_writer: false
 
-    attr_accessor :keys
+    attr_accessor :keys, :params
 
     def initialize(hash)
       self.class.initialize_class_attributes
@@ -22,6 +22,8 @@ module ValidatesStructure
         self.keys << key.to_s
         send "#{key}=", value if respond_to? "#{key}="
       end
+
+      @params = hash
     end
 
     def self.key(key, klass, validations={}, &block)
