@@ -17,10 +17,9 @@ Gem::Specification.new do |s|
   s.files = Dir["{app,config,db,lib}/**/*"] + ["LICENSE.txt", "Rakefile", "README.md"]
   s.test_files = Dir["test/**/*"]
 
-  s.add_dependency "activemodel", "~> 4.1.1"
+  s.add_dependency "activemodel", "~> 4.2.6"
 
   s.add_development_dependency "rspec"
-  s.add_development_dependency "debugger"
   s.add_development_dependency "guard"
   s.add_development_dependency "guard-rspec"
 end
