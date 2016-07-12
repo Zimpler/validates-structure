@@ -37,7 +37,7 @@ module ValidatesStructure
         raise ArgumentError.new("Key can not only appear within a block of a key of type Array")
       end
       if keys.include?(key)
-        raise ArgumentError.new("Dublicate key \"#{key}\"")
+        raise ArgumentError.new("Duplicate key \"#{key}\"")
       end
 
       keys << key
