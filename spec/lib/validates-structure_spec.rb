@@ -116,7 +116,7 @@ describe Validator do
       v = @c.new({ a: 5 })
       v.should_not be_valid
       v.errors.full_messages.should eq [
-        "/a has class \"Fixnum\" but should be a \"String\""
+        "/a has class \"Integer\" but should be a \"String\""
       ]
     end
   end
@@ -247,7 +247,7 @@ describe Validator do
       v = @c.new({ a: { b: 1, c: 1} })
       v.should_not be_valid
       v.errors.full_messages.should eq [
-        "/a/b has class \"Fixnum\" but should be a \"String\""
+        "/a/b has class \"Integer\" but should be a \"String\""
       ]
     end
 
@@ -255,7 +255,7 @@ describe Validator do
       v = @c.new({ a: 1 })
       v.should_not be_valid
       v.errors.full_messages.should eq [
-        "/a has class \"Fixnum\" but should be a \"Hash\""
+        "/a has class \"Integer\" but should be a \"Hash\""
       ]
     end
 
@@ -302,8 +302,8 @@ describe Validator do
         v = @c.new({ a: ["one", 1, 2] })
         v.should_not be_valid
         v.errors.full_messages.should eq [
-          "/a[1] has class \"Fixnum\" but should be a \"String\"",
-          "/a[2] has class \"Fixnum\" but should be a \"String\""
+          "/a[1] has class \"Integer\" but should be a \"String\"",
+          "/a[2] has class \"Integer\" but should be a \"String\""
         ]
       end
     end
@@ -341,8 +341,8 @@ describe Validator do
         v.should_not be_valid
         v.errors.full_messages.should eq [
           "/a[0]/b must not be empty",
-          "/a[1] has class \"Fixnum\" but should be a \"Hash\"",
-          "/a[2] has class \"Fixnum\" but should be a \"Hash\""
+          "/a[1] has class \"Integer\" but should be a \"Hash\"",
+          "/a[2] has class \"Integer\" but should be a \"Hash\""
         ]
       end
     end
@@ -368,7 +368,7 @@ describe Validator do
         v = @c.new({ a: [{ c: 3}], b: [{ c: "one" }] })
         v.should_not be_valid
         v.errors.full_messages.should eq [
-          "/a[0]/c has class \"Fixnum\" but should be a \"String\"",
+          "/a[0]/c has class \"Integer\" but should be a \"String\"",
           "/b[0]/c has class \"String\" but should be a \"Integer\""
         ]
       end
@@ -399,8 +399,8 @@ describe Validator do
       v = @c.new({ a: { c: 1 }, b: 2 })
       v.should_not be_valid
       v.errors.full_messages.should eq [
-        "/a/c has class \"Fixnum\" but should be a \"String\"",
-        "/b has class \"Fixnum\" but should be a \"String\""
+        "/a/c has class \"Integer\" but should be a \"String\"",
+        "/b has class \"Integer\" but should be a \"String\""
       ]
     end
   end
